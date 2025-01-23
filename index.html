@@ -62,13 +62,13 @@
     <button onclick="startQuiz()">Start Quiz</button>
 </div>
 
-<p class="hidden" id="score-container">Your current score: <span id="score">0</span>%</p>
+<p id="score-container" style="display: none;">Your current score: <span id="score">0</span>%</p>
 
-<div class="progress hidden" id="progress-container">
+<div class="progress" style="display: none;" id="progress-container">
     <div class="progress-bar" id="progress-bar">0%</div>
 </div>
 
-<div id="question-container" class="container hidden">
+<div id="question-container" class="container" style="display: none;">
     <p id="question"></p>
     <label for="answer">Your answer ($):</label>
     <input type="number" id="answer" step="0.01" required>
@@ -83,6 +83,7 @@
     let studentName = "";
     let studentEmail = "";
 
+    // Starts the quiz after collecting student details
     function startQuiz() {
         const firstName = document.getElementById("first-name").value.trim();
         const lastName = document.getElementById("last-name").value.trim();
@@ -96,14 +97,16 @@
         studentName = `${firstName} ${lastName}`;
         studentEmail = email;
 
-        document.getElementById("student-info").classList.add("hidden");
-        document.getElementById("score-container").classList.remove("hidden");
-        document.getElementById("progress-container").classList.remove("hidden");
-        document.getElementById("question-container").classList.remove("hidden");
+        // Hide student info, show quiz interface
+        document.getElementById("student-info").style.display = "none";
+        document.getElementById("score-container").style.display = "block";
+        document.getElementById("progress-container").style.display = "block";
+        document.getElementById("question-container").style.display = "block";
 
         generateQuestion();
     }
 
+    // Generates a random quiz question
     function generateQuestion() {
         const wirelessMousePrice = (Math.random() * 10 + 5).toFixed(2);
         const flashDrivePrice = (Math.random() * 10 + 10).toFixed(2);
@@ -136,6 +139,7 @@
         document.getElementById("result").innerText = "";
     }
 
+    // Submits the student's answer and generates a new question
     function submitAnswer() {
         const studentAnswer = parseFloat(document.getElementById("answer").value);
 
@@ -161,19 +165,21 @@
             document.getElementById("result").innerText = "Congratulations! You have completed the practice.";
             document.getElementById("question-container").style.display = "none";
 
-            // Send the result to the Google Sheets backend
+            // Send the result to the backend
             sendResult();
         } else {
             generateQuestion();
         }
     }
 
+    // Updates the progress bar
     function updateProgress() {
         document.getElementById("score").innerText = score;
         document.getElementById("progress-bar").style.width = score + "%";
         document.getElementById("progress-bar").innerText = score + "%";
     }
 
+    // Sends the result to Google Apps Script backend
     function sendResult() {
         const resultData = {
             name: studentName,
@@ -181,7 +187,7 @@
             score: score,
         };
 
-        fetch("https://script.google.com/macros/s/AKfycbxBa8IK5kYsd2wiZGmHnf73LraDj4HbjqiqVxh-rIPIeemujQsmIgkWcFYd5UIaII7q/exec", {
+        fetch("https://script.google.com/macros/s/AKfycbzq1VUNKwzLsG3i7qMQ99oSlg8W9KO3bKJb8J3oxXrewYD0ghEX1sPaiR-zEpqQ2tlu/exec", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -204,3 +210,4 @@
 
 </body>
 </html>
+
