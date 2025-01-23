@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Shopping Bill Quiz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #4CAF50;
+        }
+        .progress {
+            width: 100%;
+            background-color: #f3f3f3;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .progress-bar {
+            width: 0%;
+            height: 20px;
+            background-color: #4CAF50;
+            text-align: center;
+            color: white;
+            line-height: 20px;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .container {
+            margin-top: 20px;
+        }
+        #result {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Shopping Bill Quiz</h1>
+
+<div id="student-info" class="container">
+    <h3>Please enter your details:</h3>
+    <label for="first-name">First Name:</label>
+    <input type="text" id="first-name" required><br><br>
+    <label for="last-name">Last Name:</label>
+    <input type="text" id="last-name" required><br><br>
+    <label for="email">Email:</label>
+    <input type="email" id="email" required><br><br>
+    <button onclick="startQuiz()">Start Quiz</button>
+</div>
+
+<p class="hidden" id="score-container">Your current score: <span id="score">0</span>%</p>
+
+<div class="progress hidden" id="progress-container">
+    <div class="progress-bar" id="progress-bar">0%</div>
+</div>
+
+<div id="question-container" class="container hidden">
+    <p id="question"></p>
+    <label for="answer">Your answer ($):</label>
+    <input type="number" id="answer" step="0.01" required>
+    <button onclick="submitAnswer()">Submit</button>
+</div>
+
+<div id="result"></div>
+
+<script>
+    let score = 0;
+    let correctAnswer = 0;
+    let studentName = "";
+    let studentEmail = "";
+
+    function startQuiz() {
+        const firstName = document.getElementById("first-name").value.trim();
+        const lastName = document.getElementById("last-name").value.trim();
+        const email = document.getElementById("email").value.trim();
+
+        if (!firstName || !lastName || !email) {
+            alert("Please fill in all the fields.");
+            return;
+        }
+
+        studentName = `${firstName} ${lastName}`;
+        studentEmail = email;
+
+        document.getElementById("student-info").classList.add("hidden");
+        document.getElementById("score-container").classList.remove("hidden");
+        document.getElementById("progress-container").classList.remove("hidden");
+        document.getElementById("question-container").classList.remove("hidden");
+
+        generateQuestion();
+    }
+
+    function generateQuestion() {
+        const wirelessMousePrice = (Math.random() * 10 + 5).toFixed(2);
+        const flashDrivePrice = (Math.random() * 10 + 10).toFixed(2);
+        const hdmiCordPrice = (Math.random() * 10 + 15).toFixed(2);
+
+        const numMice = Math.floor(Math.random() * 3) + 1;
+        const numFlashDrives = (Math.floor(Math.random() * 3) + 1) * 2;
+        const numHdmiCords = Math.floor(Math.random() * 2) + 1;
+
+        const totalMouseCost = (numMice * wirelessMousePrice).toFixed(2);
+        const totalFlashDriveCost = ((numFlashDrives / 2) * flashDrivePrice).toFixed(2);
+        const totalHdmiCost = (numHdmiCords * hdmiCordPrice).toFixed(2);
+
+        correctAnswer = (
+            parseFloat(totalMouseCost) +
+            parseFloat(totalFlashDriveCost) +
+            parseFloat(totalHdmiCost)
+        ).toFixed(2);
+
+        const question = `
+            Janet purchased the following items:<br>
+            - ${numMice} wireless mouse/mice @ $${wirelessMousePrice} each<br>
+            - ${numFlashDrives} flash drives (2 for $${flashDrivePrice})<br>
+            - ${numHdmiCords} HDMI cord(s) @ $${hdmiCordPrice} each<br><br>
+            What is the total cost of Janet's shopping bill?
+        `;
+
+        document.getElementById("question").innerHTML = question;
+        document.getElementById("answer").value = "";
+        document.getElementById("result").innerText = "";
+    }
+
+    function submitAnswer() {
+        const studentAnswer = parseFloat(document.getElementById("answer").value);
+
+        if (isNaN(studentAnswer)) {
+            document.getElementById("result").innerText = "Please enter a valid number!";
+            document.getElementById("result").style.color = "red";
+            return;
+        }
+
+        if (studentAnswer.toFixed(2) == correctAnswer) {
+            score += 10;
+            document.getElementById("result").innerText = "Correct! +10% to your score.";
+            document.getElementById("result").style.color = "green";
+        } else {
+            score += 5;
+            document.getElementById("result").innerText = `Wrong! The correct answer was $${correctAnswer}. +5% to your score.`;
+            document.getElementById("result").style.color = "red";
+        }
+
+        updateProgress();
+
+        if (score >= 100) {
+            document.getElementById("result").innerText = "Congratulations! You have completed the practice.";
+            document.getElementById("question-container").style.display = "none";
+
+            // Send the result to the Google Sheets backend
+            sendResult();
+        } else {
+            generateQuestion();
+        }
+    }
+
+    function updateProgress() {
+        document.getElementById("score").innerText = score;
+        document.getElementById("progress-bar").style.width = score + "%";
+        document.getElementById("progress-bar").innerText = score + "%";
+    }
+
+    function sendResult() {
+        const resultData = {
+            name: studentName,
+            email: studentEmail,
+            score: score,
+        };
+
+        fetch("https://script.google.com/macros/s/AKfycbxAcvH6vP0NH34jPK9eC9hOGmAQCQYdHSZxbNx_XHTrlnP_F5U7cXlJdTvNXNSV_gk/exec", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(resultData),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert("Your result has been saved.");
+            } else {
+                alert("Failed to save your result. Please try again.");
+            }
+        })
+        .catch(error => {
+            console.error("Error saving the result:", error);
+        });
+    }
+</script>
+
+</body>
+</html>
